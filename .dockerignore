@@ -1,0 +1,9 @@
+target/
+!target/ecommerce-backend-0.0.1-SNAPSHOT.jar
+*.iml
+.idea/
+.vscode/
+.DS_Store
+*.log
+.git/
+README.md
