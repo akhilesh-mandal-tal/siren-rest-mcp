@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:15
-    container_name: ecommerce_postgres
+    container_name: e-com-db
     environment:
       POSTGRES_DB: ecommerce_db
       POSTGRES_USER: ecommerce_user
@@ -18,13 +18,12 @@ services:
 
   app:
     build: .
-    container_name: ecommerce_app
+    container_name: e-com-app
     ports:
       - "8080:8080"
     environment:
+      # Override database URL for Docker network
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ecommerce_db
-      SPRING_DATASOURCE_USERNAME: ecommerce_user
-      SPRING_DATASOURCE_PASSWORD: ecommerce_pass
     depends_on:
       postgres:
         condition: service_healthy
