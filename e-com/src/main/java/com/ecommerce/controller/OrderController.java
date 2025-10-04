@@ -1,5 +1,8 @@
 package com.ecommerce.controller;
 
+import com.ecommerce.dto.DTOMapper;
+import com.ecommerce.dto.OrderDTO;
+import com.ecommerce.dto.OrderSummaryDTO;
 import com.ecommerce.entity.Order;
 import com.ecommerce.entity.OrderItem;
 import com.ecommerce.entity.OrderStatus;
@@ -25,41 +28,46 @@ public class OrderController {
     private EntityManager entityManager;
     
     @GetMapping
-    public ResponseEntity<List<Order>> getAllOrders(
+    public ResponseEntity<List<OrderDTO>> getAllOrders(
             @RequestParam(required = false) OrderStatus status,
-            @RequestParam(required = false) String customerEmail) {
+            @RequestParam(required = true) String customerEmail) {
         
-        StringBuilder jpql = new StringBuilder("SELECT o FROM Order o WHERE 1=1");
-        
-        if (customerEmail != null && !customerEmail.trim().isEmpty()) {
-            jpql.append(" AND o.customerEmail = :customerEmail");
+        // Validate customerEmail is not empty
+        if (customerEmail == null || customerEmail.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
         }
+        
+        StringBuilder jpql = new StringBuilder("SELECT o FROM Order o WHERE o.customerEmail = :customerEmail");
+        
         if (status != null) {
             jpql.append(" AND o.status = :status");
         }
         jpql.append(" ORDER BY o.orderDate DESC");
         
         TypedQuery<Order> query = entityManager.createQuery(jpql.toString(), Order.class);
+        query.setParameter("customerEmail", customerEmail.trim());
         
-        if (customerEmail != null && !customerEmail.trim().isEmpty()) {
-            query.setParameter("customerEmail", customerEmail.trim());
-        }
         if (status != null) {
             query.setParameter("status", status);
         }
         
         List<Order> orders = query.getResultList();
-        return ResponseEntity.ok(orders);
+        List<OrderDTO> orderDTOs = DTOMapper.toOrderDTOList(orders);
+        return ResponseEntity.ok(orderDTOs);
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<Order> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long id) {
         Order order = entityManager.find(Order.class, id);
-        return order != null ? ResponseEntity.ok(order) : ResponseEntity.notFound().build();
+        if (order == null) {
+            return ResponseEntity.notFound().build();
+        }
+        OrderDTO orderDTO = DTOMapper.toOrderDTO(order);
+        return ResponseEntity.ok(orderDTO);
     }
     
     @GetMapping("/number/{orderNumber}")
-    public ResponseEntity<Order> getOrderByNumber(@PathVariable String orderNumber) {
+    public ResponseEntity<OrderDTO> getOrderByNumber(@PathVariable String orderNumber) {
         TypedQuery<Order> query = entityManager.createQuery(
             "SELECT o FROM Order o WHERE o.orderNumber = :orderNumber", Order.class);
         query.setParameter("orderNumber", orderNumber);
@@ -68,7 +76,9 @@ public class OrderController {
         if (orders.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(orders.get(0));
+        
+        OrderDTO orderDTO = DTOMapper.toOrderDTO(orders.get(0));
+        return ResponseEntity.ok(orderDTO);
     }
     
     @PostMapping
@@ -109,7 +119,8 @@ public class OrderController {
             }
             
             entityManager.persist(order);
-            return ResponseEntity.status(HttpStatus.CREATED).body(order);
+            OrderDTO orderDTO = DTOMapper.toOrderDTO(order);
+            return ResponseEntity.status(HttpStatus.CREATED).body(orderDTO);
             
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -126,7 +137,8 @@ public class OrderController {
         
         order.setStatus(status);
         Order updatedOrder = entityManager.merge(order);
-        return ResponseEntity.ok(updatedOrder);
+        OrderDTO orderDTO = DTOMapper.toOrderDTO(updatedOrder);
+        return ResponseEntity.ok(orderDTO);
     }
     
     @DeleteMapping("/{id}")

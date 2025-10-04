@@ -368,31 +368,33 @@ paths:
     get:
       tags:
         - Orders
-      summary: Get all orders
-      description: Retrieve all orders sorted by order date (newest first)
+      summary: Get orders by customer email
+      description: Retrieve orders for a specific customer sorted by order date (newest first)
       parameters:
+        - name: customerEmail
+          in: query
+          description: Customer email address (required)
+          required: true
+          schema:
+            type: string
+            format: email
         - name: status
           in: query
           description: Filter by order status
           required: false
           schema:
             $ref: '#/components/schemas/OrderStatus'
-        - name: customerEmail
-          in: query
-          description: Filter by customer email
-          required: false
-          schema:
-            type: string
-            format: email
       responses:
         '200':
-          description: List of orders
+          description: List of orders for the customer
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Order'
+        '400':
+          description: Missing or invalid customerEmail parameter
         '500':
           description: Internal server error
     

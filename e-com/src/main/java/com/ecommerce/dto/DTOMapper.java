@@ -1,6 +1,8 @@
 package com.ecommerce.dto;
 
 import com.ecommerce.entity.Category;
+import com.ecommerce.entity.Order;
+import com.ecommerce.entity.OrderItem;
 import com.ecommerce.entity.Product;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -99,6 +101,93 @@ public class DTOMapper {
         
         return products.stream()
             .map(DTOMapper::toProductDTO)
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * Convert Order entity to OrderDTO
+     */
+    public static OrderDTO toOrderDTO(Order order) {
+        if (order == null) return null;
+        
+        List<OrderItemDTO> orderItemDTOs = order.getOrderItems() != null
+            ? order.getOrderItems().stream()
+                .map(DTOMapper::toOrderItemDTO)
+                .collect(Collectors.toList())
+            : null;
+        
+        return new OrderDTO(
+            order.getId(),
+            order.getOrderNumber(),
+            order.getStatus(),
+            order.getOrderDate(),
+            order.getCustomerEmail(),
+            order.getCustomerName(),
+            order.getShippingAddress(),
+            order.getTotalAmount(),
+            orderItemDTOs
+        );
+    }
+    
+    /**
+     * Convert Order entity to OrderSummaryDTO (without order items)
+     */
+    public static OrderSummaryDTO toOrderSummaryDTO(Order order) {
+        if (order == null) return null;
+        
+        Integer totalItems = order.getOrderItems() != null 
+            ? order.getOrderItems().size() 
+            : 0;
+        
+        return new OrderSummaryDTO(
+            order.getId(),
+            order.getOrderNumber(),
+            order.getStatus(),
+            order.getOrderDate(),
+            order.getCustomerEmail(),
+            order.getCustomerName(),
+            order.getShippingAddress(),
+            order.getTotalAmount(),
+            totalItems
+        );
+    }
+    
+    /**
+     * Convert OrderItem entity to OrderItemDTO
+     */
+    public static OrderItemDTO toOrderItemDTO(OrderItem orderItem) {
+        if (orderItem == null) return null;
+        
+        ProductSummaryDTO productDTO = toProductSummaryDTO(orderItem.getProduct());
+        
+        return new OrderItemDTO(
+            orderItem.getId(),
+            productDTO,
+            orderItem.getQuantity(),
+            orderItem.getUnitPrice(),
+            orderItem.getSubtotal()
+        );
+    }
+    
+    /**
+     * Convert list of Order entities to OrderDTO list
+     */
+    public static List<OrderDTO> toOrderDTOList(List<Order> orders) {
+        if (orders == null) return null;
+        
+        return orders.stream()
+            .map(DTOMapper::toOrderDTO)
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * Convert list of Order entities to OrderSummaryDTO list
+     */
+    public static List<OrderSummaryDTO> toOrderSummaryDTOList(List<Order> orders) {
+        if (orders == null) return null;
+        
+        return orders.stream()
+            .map(DTOMapper::toOrderSummaryDTO)
             .collect(Collectors.toList());
     }
 }
